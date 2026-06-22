@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-22T08:23:46.004Z",
+  "generatedAt": "2026-06-22T08:34:50.636Z",
   "systems": [
     {
       "id": "glds-web",
@@ -7,8 +7,8 @@
       "audience": "Marketing / landing pages (Academy+ website)",
       "stack": "Rails + HTML/CSS/JS/jQuery",
       "summary": "Marketing & landing-page system — Poppins, Material Icons, conversion-focused band model.",
-      "updatedBy": "Unknown",
-      "updatedAt": "—",
+      "updatedBy": "sivaram-gl",
+      "updatedAt": "2026-06-22",
       "files": {
         "skill": {
           "url": "downloads/glds-web/glds-web-design-system.skill",
@@ -42,8 +42,8 @@
       "audience": "Internal / admin app (staff, ops)",
       "stack": "MUI v5 + React",
       "summary": "Sovereign internal/admin design system — MUI + React, Inter, light + dark, density-friendly.",
-      "updatedBy": "Unknown",
-      "updatedAt": "—",
+      "updatedBy": "sivaram-gl",
+      "updatedAt": "2026-06-22",
       "files": {
         "skill": {
           "url": "downloads/jedi/jedi-design-system.skill",
@@ -77,8 +77,8 @@
       "audience": "Learner / student-facing app",
       "stack": "Tamagui monorepo (Material 3)",
       "summary": "Learner-facing design system — Tamagui + M3 roles, Inter, light + dark, mobile-first clarity.",
-      "updatedBy": "Unknown",
-      "updatedAt": "—",
+      "updatedBy": "sivaram-gl",
+      "updatedAt": "2026-06-22",
       "files": {
         "skill": {
           "url": "downloads/magna/magna-design-system.skill",
