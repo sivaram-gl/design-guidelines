@@ -23,6 +23,27 @@ const FILE_TYPES = [
   { key: 'npm', label: 'Node package' }
 ];
 
+const FILE_TYPE_KEYS = FILE_TYPES.map((f) => f.key);
+
+function parseHash(hash) {
+  // Routes:  #/             → home
+  //          #/<systemId>            → system, default tab (skill)
+  //          #/<systemId>/<fileKey>  → system + specific tab
+  const cleaned = (hash || '').replace(/^#\/?/, '');
+  if (!cleaned) return { systemId: null, fileKey: null };
+  const [systemId, fileKey] = cleaned.split('/');
+  return {
+    systemId: systemId || null,
+    fileKey: FILE_TYPE_KEYS.includes(fileKey) ? fileKey : null
+  };
+}
+
+function buildHash(systemId, fileKey) {
+  if (!systemId) return '#/';
+  if (!fileKey) return `#/${systemId}`;
+  return `#/${systemId}/${fileKey}`;
+}
+
 function formatBytes(n) {
   if (!n) return '';
   if (n < 1024) return `${n} B`;
@@ -76,7 +97,7 @@ function mdToHtml(src) {
 export default function App() {
   const [manifest, setManifest] = useState(null);
   const [error, setError] = useState(null);
-  const [systemId, setSystemId] = useState(null);
+  const [route, setRoute] = useState(() => parseHash(window.location.hash));
 
   useEffect(() => {
     fetch('manifest.json', { cache: 'no-store' })
@@ -88,9 +109,21 @@ export default function App() {
       .catch((e) => setError(String(e)));
   }, []);
 
+  useEffect(() => {
+    const onHash = () => setRoute(parseHash(window.location.hash));
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const navigate = (systemId, fileKey = null) => {
+    const next = buildHash(systemId, fileKey);
+    if (window.location.hash !== next) window.location.hash = next;
+    else setRoute({ systemId, fileKey });
+  };
+
   const system = useMemo(
-    () => manifest?.systems.find((s) => s.id === systemId) || null,
-    [manifest, systemId]
+    () => manifest?.systems.find((s) => s.id === route.systemId) || null,
+    [manifest, route.systemId]
   );
 
   return (
@@ -103,8 +136,9 @@ export default function App() {
       >
         <Toolbar sx={{ position: 'relative', minHeight: 64 }}>
           <Box
-            component="button"
-            onClick={() => setSystemId(null)}
+            component="a"
+            href="#/"
+            onClick={(e) => { e.preventDefault(); navigate(null); }}
             aria-label="Home"
             sx={{
               display: 'inline-flex',
@@ -114,7 +148,8 @@ export default function App() {
               background: 'transparent',
               cursor: 'pointer',
               p: 0,
-              color: 'text.primary'
+              color: 'text.primary',
+              textDecoration: 'none'
             }}
           >
             <img src="gl-logo.svg" alt="" width={140} style={{ display: 'block' }} />
@@ -132,11 +167,12 @@ export default function App() {
               }}
             >
               {manifest.systems.map((s) => {
-                const active = s.id === systemId;
+                const active = s.id === route.systemId;
                 return (
                   <Button
                     key={s.id}
-                    onClick={() => setSystemId(s.id)}
+                    href={buildHash(s.id)}
+                    onClick={(e) => { e.preventDefault(); navigate(s.id); }}
                     sx={{
                       color: active ? 'primary.main' : 'text.primary',
                       fontWeight: active ? 600 : 500,
@@ -165,8 +201,15 @@ export default function App() {
 
         {!manifest && !error && <Typography color="text.secondary">Loading…</Typography>}
 
-        {manifest && !systemId && <Home systems={manifest.systems} onPick={setSystemId} />}
-        {manifest && systemId && system && <Detail system={system} help={manifest.help || {}} />}
+        {manifest && !route.systemId && <Home systems={manifest.systems} onPick={(id) => navigate(id)} />}
+        {manifest && route.systemId && system && (
+          <Detail
+            system={system}
+            help={manifest.help || {}}
+            fileKey={route.fileKey}
+            onTabChange={(k) => navigate(system.id, k)}
+          />
+        )}
       </Container>
     </Box>
   );
@@ -177,7 +220,11 @@ function Home({ systems, onPick }) {
     <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
       {systems.map((s) => (
         <Card key={s.id} variant="outlined" sx={{ height: '100%', bgcolor: 'background.paper' }}>
-          <CardActionArea sx={{ height: '100%', alignItems: 'stretch' }} onClick={() => onPick(s.id)}>
+          <CardActionArea
+            href={buildHash(s.id)}
+            onClick={(e) => { e.preventDefault(); onPick(s.id); }}
+            sx={{ height: '100%', alignItems: 'stretch' }}
+          >
             <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: '100%' }}>
               <Typography variant="h4">{s.name}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
@@ -290,21 +337,32 @@ function DownloadBar({ system, fileType }) {
   );
 }
 
-function Detail({ system, help }) {
-  const [tab, setTab] = useState(0);
+function Detail({ system, help, fileKey, onTabChange }) {
+  // Skip any unavailable tabs the URL might land on (Node package today).
+  const firstAvailable = FILE_TYPES.findIndex((ft) => system.files[ft.key]?.available);
+  const requestedIdx = fileKey ? FILE_TYPES.findIndex((ft) => ft.key === fileKey) : -1;
+  const tab =
+    requestedIdx >= 0 && system.files[FILE_TYPES[requestedIdx].key]?.available
+      ? requestedIdx
+      : firstAvailable >= 0
+        ? firstAvailable
+        : 0;
   const fileType = FILE_TYPES[tab];
   const helpHtml = useMemo(() => mdToHtml(help[fileType.key] || ''), [help, fileType.key]);
 
   return (
     <Box>
       <Typography variant="h3" sx={{ mb: 0.5 }}>{system.name}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        {system.summary}
+      </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
         Last updated by <strong>{system.updatedBy}</strong> · {system.updatedAt}
       </Typography>
 
       <Tabs
         value={tab}
-        onChange={(_, v) => setTab(v)}
+        onChange={(_, v) => onTabChange(FILE_TYPES[v].key)}
         sx={{ borderBottom: '1px solid', borderColor: 'divider', mb: 3 }}
       >
         {FILE_TYPES.map((ft) => {
@@ -314,6 +372,12 @@ function Detail({ system, help }) {
               key={ft.key}
               label={available ? ft.label : `${ft.label} (coming soon)`}
               disabled={!available}
+              href={available ? buildHash(system.id, ft.key) : undefined}
+              onClick={(e) => {
+                if (!available) return;
+                e.preventDefault();
+                onTabChange(ft.key);
+              }}
               sx={{ textTransform: 'none', fontWeight: 500 }}
             />
           );
