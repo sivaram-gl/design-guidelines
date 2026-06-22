@@ -51,6 +51,18 @@ function formatBytes(n) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+function formatUpdatedAt(value) {
+  if (!value || value === '—') return value || '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  // If the source has no time component, fall back to date-only.
+  const hasTime = /[T ]\d{2}:\d{2}/.test(value);
+  const opts = hasTime
+    ? { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+    : { year: 'numeric', month: 'short', day: 'numeric' };
+  return d.toLocaleString(undefined, opts);
+}
+
 function mdToHtml(src) {
   const escape = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const lines = src.split('\n');
@@ -232,7 +244,7 @@ function Home({ systems, onPick }) {
               </Typography>
               <Divider sx={{ mt: 1 }} />
               <Typography variant="caption" color="text.secondary">
-                Last updated by <strong>{s.updatedBy}</strong> · {s.updatedAt}
+                Last updated by <strong>{s.updatedBy}</strong> · {formatUpdatedAt(s.updatedAt)}
               </Typography>
             </CardContent>
           </CardActionArea>
@@ -285,7 +297,7 @@ function DownloadBar({ system, fileType }) {
             {file.filename}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {formatBytes(file.sizeBytes)} · updated by {system.updatedBy} · {system.updatedAt}
+            {formatBytes(file.sizeBytes)} · updated by {system.updatedBy} · {formatUpdatedAt(system.updatedAt)}
           </Typography>
         </Box>
         <Button
@@ -357,7 +369,7 @@ function Detail({ system, help, fileKey, onTabChange }) {
         {system.summary}
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
-        Last updated by <strong>{system.updatedBy}</strong> · {system.updatedAt}
+        Last updated by <strong>{system.updatedBy}</strong> · {formatUpdatedAt(system.updatedAt)}
       </Typography>
 
       <Tabs

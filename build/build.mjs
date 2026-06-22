@@ -63,8 +63,8 @@ async function gitLastTouch(filePath) {
 }
 
 function formatDate(iso) {
-  // YYYY-MM-DD slice; safe for ISO timestamps.
-  return iso ? iso.slice(0, 10) : '';
+  // Keep the full ISO timestamp so the UI can render date + time in the user's locale.
+  return iso || '';
 }
 
 function stringifyYaml(obj) {
