@@ -6,45 +6,21 @@ import {
   Card,
   CardActionArea,
   CardContent,
-  Chip,
   Container,
   Divider,
-  IconButton,
-  Link,
   Paper,
   Stack,
-  Step,
-  StepLabel,
-  Stepper,
+  Tab,
+  Tabs,
   Toolbar,
-  Tooltip,
   Typography
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 
 const FILE_TYPES = [
-  {
-    key: 'skill',
-    label: 'Claude skill',
-    icon: AutoAwesomeOutlinedIcon,
-    blurb: 'Auto-loads in Claude when you work on this system.'
-  },
-  {
-    key: 'md',
-    label: 'Markdown spec',
-    icon: DescriptionOutlinedIcon,
-    blurb: 'Paste into any AI session or commit into your repo.'
-  },
-  {
-    key: 'npm',
-    label: 'Node package',
-    icon: Inventory2OutlinedIcon,
-    blurb: 'Design tokens as JS/TS + CSS vars. (Coming soon.)'
-  }
+  { key: 'skill', label: 'Claude skill' },
+  { key: 'md', label: 'Markdown spec' },
+  { key: 'npm', label: 'Node package' }
 ];
 
 function formatBytes(n) {
@@ -54,8 +30,6 @@ function formatBytes(n) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-// Minimal markdown → HTML (headings, paragraphs, bold/italic, inline code, code blocks, lists, links).
-// Help docs are short and authored by us, so we don't need a full parser dependency in the browser.
 function mdToHtml(src) {
   const escape = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const lines = src.split('\n');
@@ -64,29 +38,28 @@ function mdToHtml(src) {
   let inList = false;
   const flushList = () => { if (inList) { out += '</ul>'; inList = false; } };
   for (const raw of lines) {
-    const line = raw;
-    if (/^```/.test(line)) {
+    if (/^```/.test(raw)) {
       flushList();
       if (inCode) { out += '</code></pre>'; inCode = false; }
       else { out += '<pre><code>'; inCode = true; }
       continue;
     }
-    if (inCode) { out += escape(line) + '\n'; continue; }
-    if (/^\s*$/.test(line)) { flushList(); continue; }
-    const h = line.match(/^(#{1,4})\s+(.+)$/);
+    if (inCode) { out += escape(raw) + '\n'; continue; }
+    if (/^\s*$/.test(raw)) { flushList(); continue; }
+    const h = raw.match(/^(#{1,4})\s+(.+)$/);
     if (h) {
       flushList();
       const lvl = h[1].length;
       out += `<h${lvl}>${inline(escape(h[2]))}</h${lvl}>`;
       continue;
     }
-    if (/^[-*]\s+/.test(line)) {
+    if (/^[-*]\s+/.test(raw)) {
       if (!inList) { out += '<ul>'; inList = true; }
-      out += `<li>${inline(escape(line.replace(/^[-*]\s+/, '')))}</li>`;
+      out += `<li>${inline(escape(raw.replace(/^[-*]\s+/, '')))}</li>`;
       continue;
     }
     flushList();
-    out += `<p>${inline(escape(line))}</p>`;
+    out += `<p>${inline(escape(raw))}</p>`;
   }
   flushList();
   if (inCode) out += '</code></pre>';
@@ -104,7 +77,6 @@ export default function App() {
   const [manifest, setManifest] = useState(null);
   const [error, setError] = useState(null);
   const [systemId, setSystemId] = useState(null);
-  const [fileType, setFileType] = useState(null);
 
   useEffect(() => {
     fetch('manifest.json', { cache: 'no-store' })
@@ -120,253 +92,279 @@ export default function App() {
     () => manifest?.systems.find((s) => s.id === systemId) || null,
     [manifest, systemId]
   );
-  const file = system && fileType ? system.files[fileType] : null;
-  const help = manifest?.help?.[fileType] || '';
-  const activeStep = !systemId ? 0 : !fileType ? 1 : 2;
 
   return (
     <Box sx={{ minHeight: '100%', bgcolor: 'background.default' }}>
-      <AppBar position="static" color="inherit" elevation={0} sx={{ borderBottom: '1px solid #EDEBE9' }}>
-        <Toolbar>
-          <Box sx={{ width: 28, height: 28, bgcolor: 'primary.main', borderRadius: 1, mr: 1.5 }} />
-          <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Great Learning Design Systems
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Distribution hub
-          </Typography>
+      <AppBar
+        position="static"
+        color="inherit"
+        elevation={0}
+        sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}
+      >
+        <Toolbar sx={{ position: 'relative', minHeight: 64 }}>
+          <Box
+            component="button"
+            onClick={() => setSystemId(null)}
+            aria-label="Home"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              border: 0,
+              background: 'transparent',
+              cursor: 'pointer',
+              p: 0,
+              color: 'text.primary'
+            }}
+          >
+            <img src="gl-logo.svg" alt="" width={140} style={{ display: 'block' }} />
+          </Box>
+
+          {manifest && (
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              {manifest.systems.map((s) => {
+                const active = s.id === systemId;
+                return (
+                  <Button
+                    key={s.id}
+                    onClick={() => setSystemId(s.id)}
+                    sx={{
+                      color: active ? 'primary.main' : 'text.primary',
+                      fontWeight: active ? 600 : 500,
+                      textTransform: 'none',
+                      px: 2
+                    }}
+                  >
+                    {s.name.replace(' Design System', '')}
+                  </Button>
+                );
+              })}
+            </Stack>
+          )}
         </Toolbar>
       </AppBar>
 
       <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }} alternativeLabel>
-          <Step><StepLabel>Pick a design system</StepLabel></Step>
-          <Step><StepLabel>Pick a file type</StepLabel></Step>
-          <Step><StepLabel>Read & download</StepLabel></Step>
-        </Stepper>
-
         {error && (
           <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-            <Typography color="error.dark" variant="subtitle1">Couldn't load manifest.json</Typography>
+            <Typography color="error.light" variant="subtitle1">Couldn't load manifest.json</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {error} — run <code>npm run build</code> to generate it.
             </Typography>
           </Paper>
         )}
 
-        {!manifest && !error && (
-          <Typography color="text.secondary">Loading…</Typography>
-        )}
+        {!manifest && !error && <Typography color="text.secondary">Loading…</Typography>}
 
-        {manifest && !systemId && (
-          <SystemPicker
-            systems={manifest.systems}
-            onPick={(id) => setSystemId(id)}
-          />
-        )}
-
-        {manifest && systemId && !fileType && (
-          <FileTypePicker
-            system={system}
-            onBack={() => setSystemId(null)}
-            onPick={(key) => setFileType(key)}
-          />
-        )}
-
-        {manifest && systemId && fileType && (
-          <Detail
-            system={system}
-            fileType={fileType}
-            file={file}
-            help={help}
-            onBack={() => setFileType(null)}
-            onReset={() => { setFileType(null); setSystemId(null); }}
-          />
-        )}
+        {manifest && !systemId && <Home systems={manifest.systems} onPick={setSystemId} />}
+        {manifest && systemId && system && <Detail system={system} help={manifest.help || {}} />}
       </Container>
-
-      <Box component="footer" sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
-        <Typography variant="caption">
-          Generated {manifest?.generatedAt ? new Date(manifest.generatedAt).toLocaleString() : '—'}
-        </Typography>
-      </Box>
     </Box>
   );
 }
 
-function SystemPicker({ systems, onPick }) {
+function Home({ systems, onPick }) {
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 1 }}>Pick a design system</Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Three systems power Great Learning — internal admin, learner-facing, and the marketing website. Pick the one you're building for.
-      </Typography>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
-        {systems.map((s) => (
-          <Card key={s.id} variant="outlined" sx={{ height: '100%' }}>
-            <CardActionArea sx={{ height: '100%', alignItems: 'stretch' }} onClick={() => onPick(s.id)}>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ rowGap: 1 }}>
-                  <Chip label={s.audience} size="small" color="primary" variant="outlined" />
-                  <Chip label={s.stack} size="small" variant="outlined" />
-                </Stack>
-                <Typography variant="h4" sx={{ mt: 0.5 }}>{s.name}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
-                  {s.summary}
-                </Typography>
-                <Divider sx={{ mt: 1 }} />
-                <Typography variant="caption" color="text.secondary">
-                  Last updated by <strong>{s.updatedBy}</strong> · {s.updatedAt}
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        ))}
-      </Box>
+    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
+      {systems.map((s) => (
+        <Card key={s.id} variant="outlined" sx={{ height: '100%', bgcolor: 'background.paper' }}>
+          <CardActionArea sx={{ height: '100%', alignItems: 'stretch' }} onClick={() => onPick(s.id)}>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: '100%' }}>
+              <Typography variant="h4">{s.name}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
+                {s.summary}
+              </Typography>
+              <Divider sx={{ mt: 1 }} />
+              <Typography variant="caption" color="text.secondary">
+                Last updated by <strong>{s.updatedBy}</strong> · {s.updatedAt}
+              </Typography>
+            </CardContent>
+          </CardActionArea>
+        </Card>
+      ))}
     </Box>
   );
 }
 
-function FileTypePicker({ system, onBack, onPick }) {
+function DownloadBar({ system, fileType }) {
+  const file = system.files[fileType.key];
+  if (!file?.available) {
+    return (
+      <Card variant="outlined" sx={{ mb: 4, bgcolor: 'background.paper' }}>
+        <CardContent sx={{ py: 2.5 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            {fileType.label}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Coming soon — not available for download yet.
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        mb: 4,
+        bgcolor: 'background.paper',
+        borderColor: 'primary.main',
+        borderWidth: 1
+      }}
+    >
+      <CardContent
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          py: 2,
+          '&:last-child': { pb: 2 }
+        }}
+      >
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, wordBreak: 'break-all' }}
+          >
+            {file.filename}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {formatBytes(file.sizeBytes)} · updated by {system.updatedBy} · {system.updatedAt}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<DownloadIcon />}
+          href={file.url}
+          download={file.filename}
+          sx={{ flexShrink: 0 }}
+        >
+          Download
+        </Button>
+      </CardContent>
+      {fileType.key === 'md' && system.files.context?.available && (
+        <>
+          <Divider />
+          <CardContent
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              py: 1.5,
+              '&:last-child': { pb: 1.5 }
+            }}
+          >
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, wordBreak: 'break-all' }}>
+                {system.files.context.filename}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {formatBytes(system.files.context.sizeBytes)} · companion context file
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              startIcon={<DownloadIcon />}
+              href={system.files.context.url}
+              download={system.files.context.filename}
+              sx={{ flexShrink: 0 }}
+            >
+              Context
+            </Button>
+          </CardContent>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function Detail({ system, help }) {
+  const [tab, setTab] = useState(0);
+  const fileType = FILE_TYPES[tab];
+  const helpHtml = useMemo(() => mdToHtml(help[fileType.key] || ''), [help, fileType.key]);
+
   return (
     <Box>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-        <IconButton onClick={onBack} aria-label="Back to systems"><ArrowBackIcon /></IconButton>
-        <Typography variant="body2" color="text.secondary">All systems</Typography>
-      </Stack>
-
-      <Typography variant="h3" sx={{ mb: 1 }}>{system.name}</Typography>
-      <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap">
-        <Chip label={system.audience} size="small" color="primary" variant="outlined" />
-        <Chip label={system.stack} size="small" variant="outlined" />
-      </Stack>
-      <Typography color="text.secondary" sx={{ mb: 1 }}>{system.summary}</Typography>
+      <Typography variant="h3" sx={{ mb: 0.5 }}>{system.name}</Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
         Last updated by <strong>{system.updatedBy}</strong> · {system.updatedAt}
       </Typography>
 
-      <Typography variant="h4" sx={{ mb: 2 }}>Pick a file type</Typography>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ borderBottom: '1px solid', borderColor: 'divider', mb: 3 }}
+      >
         {FILE_TYPES.map((ft) => {
-          const Icon = ft.icon;
-          const f = system.files[ft.key];
-          const disabled = !f?.available;
-          const card = (
-            <Card variant="outlined" sx={{ height: '100%', opacity: disabled ? 0.6 : 1 }}>
-              <CardActionArea disabled={disabled} onClick={() => onPick(ft.key)} sx={{ height: '100%', alignItems: 'stretch' }}>
-                <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Icon color={disabled ? 'disabled' : 'primary'} />
-                    <Typography variant="h5">{ft.label}</Typography>
-                    {disabled && <Chip size="small" label="Coming soon" sx={{ ml: 'auto' }} />}
-                  </Stack>
-                  <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
-                    {ft.blurb}
-                  </Typography>
-                  {f?.available && (
-                    <Typography variant="caption" color="text.secondary">
-                      {f.filename} · {formatBytes(f.sizeBytes)}
-                    </Typography>
-                  )}
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          );
-          return disabled ? (
-            <Tooltip key={ft.key} title="Not available yet">{card}</Tooltip>
-          ) : (
-            <React.Fragment key={ft.key}>{card}</React.Fragment>
+          const available = system.files[ft.key]?.available;
+          return (
+            <Tab
+              key={ft.key}
+              label={available ? ft.label : `${ft.label} (coming soon)`}
+              disabled={!available}
+              sx={{ textTransform: 'none', fontWeight: 500 }}
+            />
           );
         })}
-      </Box>
-    </Box>
-  );
-}
+      </Tabs>
 
-function Detail({ system, fileType, file, help, onBack, onReset }) {
-  const ft = FILE_TYPES.find((t) => t.key === fileType);
-  return (
-    <Box>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-        <IconButton onClick={onBack} aria-label="Back to file types"><ArrowBackIcon /></IconButton>
-        <Link component="button" onClick={onReset} underline="hover" variant="body2">All systems</Link>
-        <Typography variant="body2" color="text.secondary">/</Typography>
-        <Link component="button" onClick={onBack} underline="hover" variant="body2">{system.name}</Link>
-      </Stack>
+      <Box sx={{ maxWidth: 720 }}>
+        <DownloadBar system={system} fileType={fileType} />
 
-      <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 320px' } }}>
-        <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 } }}>
-          <Typography variant="overline" color="text.secondary">{ft.label}</Typography>
-          <Typography variant="h3" sx={{ mb: 2 }}>How to use</Typography>
-          <Box
-            sx={{
-              '& h1, & h2, & h3': { fontWeight: 600, letterSpacing: '-0.4px', mt: 3 },
-              '& h1': { fontSize: 24 },
-              '& h2': { fontSize: 20 },
-              '& h3': { fontSize: 18 },
-              '& p': { fontSize: 16, lineHeight: 1.55, my: 1.5 },
-              '& ul': { pl: 3, my: 1.5 },
-              '& li': { mb: 0.5 },
-              '& code': { bgcolor: '#F3F2F1', px: 0.7, py: 0.2, borderRadius: 1, fontSize: 14 },
-              '& pre': { bgcolor: '#F3F2F1', p: 2, borderRadius: 1, overflowX: 'auto' },
-              '& pre code': { bgcolor: 'transparent', p: 0 },
-              '& a': { color: 'primary.main' }
-            }}
-            dangerouslySetInnerHTML={{ __html: mdToHtml(help) }}
-          />
-        </Paper>
-
-        <Stack spacing={2}>
-          <Paper variant="outlined" sx={{ p: 2.5 }}>
-            <Typography variant="overline" color="text.secondary">System</Typography>
-            <Typography variant="h4" sx={{ mb: 1 }}>{system.name}</Typography>
-            <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap" rowGap={1}>
-              <Chip label={system.audience} size="small" color="primary" variant="outlined" />
-              <Chip label={system.stack} size="small" variant="outlined" />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {system.summary}
-            </Typography>
-            <Divider sx={{ mb: 1.5 }} />
-            <Typography variant="caption" color="text.secondary" component="div">
-              Last updated by
-            </Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{system.updatedBy}</Typography>
-            <Typography variant="caption" color="text.secondary">{system.updatedAt}</Typography>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2.5 }}>
-            <Typography variant="overline" color="text.secondary">Download</Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 0.5 }}>{file.filename}</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-              {formatBytes(file.sizeBytes)}
-            </Typography>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              size="large"
-              startIcon={<DownloadIcon />}
-              href={file.url}
-              download={file.filename}
-              disabled={!file.available}
-            >
-              Download
-            </Button>
-            {fileType === 'md' && system.files.context?.available && (
-              <Button
-                fullWidth
-                variant="outlined"
-                color="primary"
-                sx={{ mt: 1 }}
-                href={system.files.context.url}
-                download={system.files.context.filename}
-              >
-                Also get {system.files.context.filename}
-              </Button>
-            )}
-          </Paper>
-        </Stack>
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ display: 'block', mb: 1, letterSpacing: '1.5px' }}
+        >
+          How to use
+        </Typography>
+        <Box
+          sx={{
+            color: 'text.secondary',
+            '& h1, & h2, & h3': {
+              fontWeight: 600,
+              letterSpacing: 0,
+              mt: 2,
+              mb: 0.5,
+              color: 'text.primary'
+            },
+            '& h1': { fontSize: 14 },
+            '& h2': { fontSize: 13 },
+            '& h3': { fontSize: 12 },
+            '& p': { fontSize: 13, lineHeight: 1.55, my: 1 },
+            '& ul': { pl: 2.5, my: 1 },
+            '& li': { fontSize: 13, mb: 0.25 },
+            '& code': {
+              bgcolor: 'rgba(255,255,255,0.08)',
+              px: 0.6,
+              py: 0.15,
+              borderRadius: 1,
+              fontSize: 12
+            },
+            '& pre': {
+              bgcolor: 'rgba(255,255,255,0.06)',
+              p: 1.5,
+              borderRadius: 1,
+              overflowX: 'auto',
+              fontSize: 12
+            },
+            '& pre code': { bgcolor: 'transparent', p: 0 },
+            '& a': { color: 'primary.main' }
+          }}
+          dangerouslySetInnerHTML={{ __html: helpHtml }}
+        />
       </Box>
     </Box>
   );

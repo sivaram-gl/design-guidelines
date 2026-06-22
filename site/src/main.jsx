@@ -5,11 +5,12 @@ import App from './App.jsx';
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
-    primary: { main: '#196AE5', dark: '#0F4089', light: '#4788EA', contrastText: '#FFFFFF' },
-    secondary: { main: '#FF9800' },
-    background: { default: '#FAFAFA', paper: '#FFFFFF' },
-    text: { primary: 'rgba(33,33,33,0.92)', secondary: 'rgba(33,33,33,0.72)' }
+    mode: 'dark',
+    primary: { main: '#66BBFF', dark: '#3A9AE8', light: '#E8F0FC', contrastText: '#0B1220' },
+    secondary: { main: '#FFCC80' },
+    background: { default: '#121212', paper: '#1B1B1B' },
+    text: { primary: '#FFFFFF', secondary: 'rgba(255,255,255,0.70)' },
+    divider: 'rgba(255,255,255,0.12)'
   },
   typography: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
