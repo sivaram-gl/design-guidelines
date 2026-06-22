@@ -164,7 +164,10 @@ export default function App() {
               textDecoration: 'none'
             }}
           >
-            <img src="gl-logo.svg" alt="" width={140} style={{ display: 'block' }} />
+            <img src="gl-logo.svg" alt="Great Learning" width={36} height={36} style={{ display: 'block' }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, letterSpacing: 0.2 }}>
+              Great Learning
+            </Typography>
           </Box>
 
           {manifest && (
