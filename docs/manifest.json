@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-06-22T08:23:46.004Z",
+  "systems": [
+    {
+      "id": "glds-web",
+      "name": "GLDS Web Design System",
+      "audience": "Marketing / landing pages (Academy+ website)",
+      "stack": "Rails + HTML/CSS/JS/jQuery",
+      "summary": "Marketing & landing-page system — Poppins, Material Icons, conversion-focused band model.",
+      "updatedBy": "Unknown",
+      "updatedAt": "—",
+      "files": {
+        "skill": {
+          "url": "downloads/glds-web/glds-web-design-system.skill",
+          "filename": "glds-web-design-system.skill",
+          "sizeBytes": 11414,
+          "available": true
+        },
+        "md": {
+          "url": "downloads/glds-web/glds-web-design-system.md",
+          "filename": "glds-web-design-system.md",
+          "sizeBytes": 27307,
+          "available": true
+        },
+        "context": {
+          "url": "downloads/glds-web/glds-web-design-system.context.md",
+          "filename": "glds-web-design-system.context.md",
+          "sizeBytes": 11378,
+          "available": true
+        },
+        "npm": {
+          "url": "",
+          "filename": "@greatlearning/glds-web-design-system",
+          "sizeBytes": 0,
+          "available": false
+        }
+      }
+    },
+    {
+      "id": "jedi",
+      "name": "Jedi Design System",
+      "audience": "Internal / admin app (staff, ops)",
+      "stack": "MUI v5 + React",
+      "summary": "Sovereign internal/admin design system — MUI + React, Inter, light + dark, density-friendly.",
+      "updatedBy": "Unknown",
+      "updatedAt": "—",
+      "files": {
+        "skill": {
+          "url": "downloads/jedi/jedi-design-system.skill",
+          "filename": "jedi-design-system.skill",
+          "sizeBytes": 14264,
+          "available": true
+        },
+        "md": {
+          "url": "downloads/jedi/jedi-design-system.md",
+          "filename": "jedi-design-system.md",
+          "sizeBytes": 35089,
+          "available": true
+        },
+        "context": {
+          "url": "downloads/jedi/jedi-design-system.context.md",
+          "filename": "jedi-design-system.context.md",
+          "sizeBytes": 11046,
+          "available": true
+        },
+        "npm": {
+          "url": "",
+          "filename": "@greatlearning/jedi-design-system",
+          "sizeBytes": 0,
+          "available": false
+        }
+      }
+    },
+    {
+      "id": "magna",
+      "name": "Magna Design System",
+      "audience": "Learner / student-facing app",
+      "stack": "Tamagui monorepo (Material 3)",
+      "summary": "Learner-facing design system — Tamagui + M3 roles, Inter, light + dark, mobile-first clarity.",
+      "updatedBy": "Unknown",
+      "updatedAt": "—",
+      "files": {
+        "skill": {
+          "url": "downloads/magna/magna-design-system.skill",
+          "filename": "magna-design-system.skill",
+          "sizeBytes": 10809,
+          "available": true
+        },
+        "md": {
+          "url": "downloads/magna/magna-design-system.md",
+          "filename": "magna-design-system.md",
+          "sizeBytes": 26432,
+          "available": true
+        },
+        "context": {
+          "url": "downloads/magna/magna-design-system.context.md",
+          "filename": "magna-design-system.context.md",
+          "sizeBytes": 9341,
+          "available": true
+        },
+        "npm": {
+          "url": "",
+          "filename": "@greatlearning/magna-design-system",
+          "sizeBytes": 0,
+          "available": false
+        }
+      }
+    }
+  ],
+  "help": {
+    "skill": "# Claude skill (`.skill` file)\n\nA **Claude skill** is a packaged unit of expertise — a folder containing a `SKILL.md` (with YAML frontmatter that tells Claude *when* to load the skill) plus any supporting files. Once installed, Claude scans the description of every available skill and auto-loads the matching one when your prompt looks relevant. No copy/paste, no manual context juggling.\n\n## Install\n\n**Claude.ai (web)** — open Settings → *Capabilities* → *Skills* → *Add skill* → upload the `.skill` file. The skill becomes available in every new chat.\n\n**Claude Code (CLI / IDE)** — drop the unzipped folder into the project's `.claude/skills/` directory (create it if it doesn't exist), or your user-level skills directory for cross-project use. Restart the session.\n\n## How triggering works\n\nClaude reads the `description` field in the skill's frontmatter and decides whether the skill is relevant to your current message. That description is the only signal it has — so these skills are written with explicit \"use whenever…\" / \"NOT for…\" cues to keep them from cross-firing with the other Great Learning design systems.\n\nIf you don't want the skill to auto-trigger, you can call it out explicitly in your prompt (\"use the Jedi design system skill\"), or disable it in Settings.\n\n## When to prefer this over the raw MD\n\nPick the skill when you'll work on the same system repeatedly inside Claude — it loads silently and stays out of your prompt window. Pick the MD when you want to paste it into a different tool (Cursor, Codex, ChatGPT) or commit it to a repo as the canonical reference.",
+    "md": "# Markdown spec (`.md` file)\n\nThe full design system as a single markdown document — the **source of truth**, hand-built from the production Figma extraction. It carries every token, every component spec, every behavioral rule, and YAML frontmatter (`name`, `id`, `audience`, `stack`, `summary`).\n\n## How to use\n\n**Paste into an AI session** — drop the entire file into Claude / Cursor / Codex / ChatGPT as context at the start of a coding session. The model will respect tokens, naming, and the engagement protocol when generating code.\n\n**Keep in-repo** — commit the file into your codebase (e.g. `docs/design-system.md`) as the canonical reference for design and engineering. Link to it from your README.\n\n**Pair with the `.context.md`** — every system also ships a leaner *context* file optimized for AI prompt windows: same rules, denser format, no narrative. Use the context file for short prompts and the full spec when you need the worked examples and rationale.\n\n## When to prefer this over the skill\n\nPick the MD when you want explicit control over what's in context, when you're using a tool that doesn't support Claude skills, or when the spec needs to live alongside your code as documentation.",
+    "npm": "# Node package (coming soon)\n\nA future npm package that ships the design system as **code-level tokens** — colors, type scale, spacing, breakpoints — generated from a canonical `tokens.json` per system. Same source of truth as the markdown spec, but consumable directly by your build pipeline.\n\n## Planned shape\n\n```bash\nnpm install @greatlearning/<system>-design-system\n```\n\n```ts\nimport { colors, type, spacing } from '@greatlearning/<system>-design-system';\nimport '@greatlearning/<system>-design-system/css'; // CSS custom properties\n```\n\n- **JS/TS exports** for use in React/Tamagui/Rails view helpers.\n- **CSS custom properties** for stylesheets.\n- **JSON tokens** for design tools and downstream generators.\n\n## Why it isn't ready yet\n\nThe packages will be generated from a canonical `tokens.json` per system. That file doesn't exist yet — adding it is the next milestone after the markdown specs stabilize. Until then, the markdown spec is the authoritative source: copy the hex values into your own theme, then swap to the package when it ships."
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@greatlearning/glds-web-design-system",
+  "version": "0.0.0",
+  "description": "GLDS Web Design System — design tokens (coming soon).",
+  "main": "index.js",
+  "private": true,
+  "license": "UNLICENSED"
+}

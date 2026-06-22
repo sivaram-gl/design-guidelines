@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+*.log
+
+# Local-only editor / OS noise
+.vscode/
+.idea/
+
+# dist is COMMITTED (it's what GitHub Pages serves alongside /docs)
+# !dist/

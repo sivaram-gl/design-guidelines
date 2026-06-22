@@ -1,0 +1,8 @@
+{
+  "name": "@greatlearning/magna-design-system",
+  "version": "0.0.0",
+  "description": "Magna Design System — design tokens (coming soon).",
+  "main": "index.js",
+  "private": true,
+  "license": "UNLICENSED"
+}

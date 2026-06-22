@@ -1,0 +1,8 @@
+{
+  "name": "@greatlearning/jedi-design-system",
+  "version": "0.0.0",
+  "description": "Jedi Design System — design tokens (coming soon).",
+  "main": "index.js",
+  "private": true,
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,28 @@
+{
+  "name": "design-guidelines",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Great Learning Design Systems — distribution hub (Jedi, Magna, GLDS Web).",
+  "scripts": {
+    "build:artifacts": "node build/build.mjs",
+    "build:site": "vite build --config site/vite.config.js",
+    "build": "npm run build:artifacts && npm run build:site",
+    "dev:site": "vite --config site/vite.config.js",
+    "serve:docs": "npx --yes http-server docs -p 4173 -c-1"
+  },
+  "devDependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^5.16.7",
+    "@mui/material": "^5.16.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "gray-matter": "^4.0.3"
+  }
+}
